@@ -1,0 +1,13 @@
+[project]
+name = "pitchxt"
+version = "0.1.0"
+description = "Pitch control and expected threat (xT) from open football data"
+requires-python = ">=3.9"
+dependencies = ["numpy", "pandas", "matplotlib"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
