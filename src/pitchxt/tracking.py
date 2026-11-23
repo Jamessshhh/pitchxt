@@ -104,3 +104,25 @@ def frame_players(df, frame, team):
             rows.append(vals)
     arr = np.array(rows, dtype=float)
     return np.nan_to_num(arr, nan=0.0) if len(arr) else arr.reshape(0, 4)
+
+
+def home_attacks_right_first_half(df):
+    """True if the home team attacks toward +x in period 1.
+
+    Metrica doesn't say which way each team plays, and it differs between games,
+    so we infer it: a team's goalkeeper is the player who stays deepest in their
+    own half, so the home player with the largest |mean x| in period 1 is the
+    keeper. A keeper on the left (negative x) means home attacks to the right.
+    """
+    d = df[df["period"] == 1]
+    hx = d[[c for c in d.columns if c.startswith("home_") and c.endswith("_x")]].mean()
+    return bool(hx.loc[hx.abs().idxmax()] < 0)
+
+
+def to_single_direction(df):
+    """Flip halves so the home team always attacks toward +x (call on raw tracking)."""
+    out = df.copy()
+    cols = [c for c in out.columns if _COORD_COL.search(c)]
+    flip = (out["period"] == 2) if home_attacks_right_first_half(df) else (out["period"] == 1)
+    out.loc[flip, cols] = -out.loc[flip, cols]
+    return out
