@@ -74,3 +74,17 @@ def plot_value_map(df, frame, xt_grid, team="home", nx=50, ny=32, ax=None, param
     ax.set_title(f"Value of controlled space, {team} (frame {frame}), threat share {r['threat_share']:.2f}")
     plt.colorbar(im, ax=ax, shrink=0.6, label="control x xT")
     return ax
+
+
+
+def voronoi_share(df, frame, xt_grid, nx=33, ny=21):
+    """Same as frame_value's threat_share (home view) but with Voronoi control."""
+    from .pitch_control import make_grid, voronoi_control_xy
+
+    xs, ys = make_grid(nx, ny)
+    home = frame_players(df, frame, "home")[:, :2]
+    away = frame_players(df, frame, "away")[:, :2]
+    pc_h, pc_a = voronoi_control_xy(home, away, xs, ys)
+    vh = (pc_h * xt_on_control_grid(xt_grid, xs, ys, "home")).mean()
+    va = (pc_a * xt_on_control_grid(xt_grid, xs, ys, "away")).mean()
+    return vh / (vh + va) if (vh + va) > 0 else np.nan

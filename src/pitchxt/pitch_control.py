@@ -117,3 +117,22 @@ def plot_pitch_control(df, frame, attacking_team="home", nx=50, ny=32, ax=None, 
     ax.scatter(df.loc[frame, "ball_x"], df.loc[frame, "ball_y"], s=60, c="black", ec="white", zorder=4)
     ax.set_title(f"Pitch control, frame {frame} (red = {attacking_team})")
     return ax
+
+
+
+def voronoi_control_xy(att_xy, dfn_xy, xs, ys):
+    """Baseline: each cell belongs entirely to whichever team has the nearest player.
+
+    att_xy, dfn_xy : (n, 2) arrays of player positions. Returns (pc_att, pc_def) of
+    0/1 values with shape (len(ys), len(xs)). Ignores velocities and the ball.
+    """
+    gx, gy = np.meshgrid(xs, ys)
+    pts = np.stack([gx.ravel(), gy.ravel()], axis=1)
+
+    def nearest(players):
+        if len(players) == 0:
+            return np.full(len(pts), np.inf)
+        return np.linalg.norm(pts[:, None, :] - players[None, :, :], axis=2).min(axis=1)
+
+    pc_a = (nearest(att_xy) < nearest(dfn_xy)).astype(float).reshape(gx.shape)
+    return pc_a, 1.0 - pc_a

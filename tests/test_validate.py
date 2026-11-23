@@ -38,3 +38,21 @@ def test_direction_is_inferred_per_game():
     # after normalising, the keeper is always on the left (home attacks +x) in both halves
     for df in (left_keeper, right_keeper):
         assert (to_single_direction(df)["home_1_x"] < 0).all()
+
+
+
+def test_paired_bootstrap_detects_a_better_score():
+    from pitchxt.validate import paired_bootstrap
+
+    rng = np.random.default_rng(1)
+    n = 3000
+    label = rng.random(n) < 0.2
+    table = pd.DataFrame({
+        "game": 1, "frame": np.arange(n) * 25, "label": label,
+        "good": label * 1.0 + rng.normal(0, 0.8, n),     # informative
+        "noise": rng.normal(0, 1, n),                    # pure noise
+    })
+    diff, lo, hi, p = paired_bootstrap(table, "good", "noise", n_boot=200)
+    assert diff > 0.2 and lo > 0 and p > 0.99
+    same, *_ = paired_bootstrap(table, "good", "good", n_boot=50)
+    assert same == 0

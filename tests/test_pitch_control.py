@@ -39,3 +39,13 @@ def test_running_toward_a_spot_helps():
     p_still, _ = pitch_control_xy(still, defender, (0, 0), xs, ys)
     p_run, _ = pitch_control_xy(running, defender, (0, 0), xs, ys)
     assert _at(p_run, xs, ys, 2, 0) > _at(p_still, xs, ys, 2, 0)
+
+
+
+def test_voronoi_splits_pitch_at_the_midline():
+    from pitchxt.pitch_control import voronoi_control_xy
+
+    xs, ys = make_grid(40, 20)
+    pa, pd_ = voronoi_control_xy(np.array([[-10.0, 0.0]]), np.array([[10.0, 0.0]]), xs, ys)
+    assert (pa[:, xs < 0] == 1).all() and (pa[:, xs > 0] == 0).all()
+    assert np.allclose(pa + pd_, 1)
