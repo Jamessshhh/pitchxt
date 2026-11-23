@@ -66,6 +66,7 @@ git clone --depth 1 https://github.com/metrica-sports/sample-data.git data/raw/m
 
 pytest -q
 python scripts/make_figures.py      # regenerates everything in docs/
+streamlit run app/streamlit_app.py   # interactive explorer
 ```
 
 ## Layout

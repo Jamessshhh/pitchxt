@@ -4,4 +4,4 @@ matplotlib
 statsbombpy
 pyarrow
 ipykernel
-pytest
+pyteststreamlit
