@@ -37,3 +37,30 @@ def plot_grid(grid, ax=None, cmap="YlOrRd", title=None):
         ax.set_title(title)
     plt.colorbar(im, ax=ax, shrink=0.7)
     return ax
+
+
+
+def draw_pitch_metres(ax=None, length=106.0, width=68.0, line_color="#444", bg="white"):
+    """Pitch with the origin at the centre spot, y pointing up (Metrica / tracking coords)."""
+    if ax is None:
+        _, ax = plt.subplots(figsize=(10, 6.5))
+    ax.set_facecolor(bg)
+    kw = dict(fill=False, ec=line_color, lw=1.5)
+    hl, hw = length / 2, width / 2
+
+    ax.add_patch(Rectangle((-hl, -hw), length, width, **kw))
+    ax.plot([0, 0], [-hw, hw], color=line_color, lw=1.5)
+    ax.add_patch(Circle((0, 0), 9.15, **kw))
+    ax.plot(0, 0, ".", color=line_color, ms=4)
+
+    for sign in (-1, 1):
+        x_pen = hl - 16.5 if sign > 0 else -hl
+        x_six = hl - 5.5 if sign > 0 else -hl
+        ax.add_patch(Rectangle((x_pen, -20.16), 16.5, 40.32, **kw))
+        ax.add_patch(Rectangle((x_six, -9.16), 5.5, 18.32, **kw))
+
+    ax.set_xlim(-hl - 2, hl + 2)
+    ax.set_ylim(-hw - 2, hw + 2)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    return ax
