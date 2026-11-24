@@ -46,13 +46,23 @@ Paired comparison at 10 s (difference in AUC, 95% interval from a block bootstra
 3. **Value of space** (`value.py`): control × xT per cell, measured in each team's own attacking direction. *Threat share* is the home team's value divided by the sum of both teams' values.
 4. **Validation** (`validate.py`, `events.py`): frames are sampled once per second; for each team, the label is whether it shoots within the next N seconds. Confidence intervals come from resampling 60-second blocks, because neighbouring frames are not independent.
 
+## Status and next steps
+
+All results above use the two Metrica sample games. A loader for a second source, the DFL open dataset (seven Bundesliga matches with optical tracking at 25 fps and synchronised events), is implemented and tested (`dfl.py`, `scripts/check_dfl.py`), but **no results on that data are included yet**.
+
+Next:
+
+1. Run the same validation on the seven DFL matches alongside the Metrica games, to tighten the intervals.
+2. Fit the Spearman parameters to the data instead of using the published defaults.
+3. Try a graph neural network on the same frames, as a learned alternative to the hand-built threat share.
+
 ## Limitations
 
-- Only two games (48 shots) are available as open tracking data in this format, so intervals are wide.
+- Only two games (48 shots) are included in the results, so intervals are wide.
 - xT is fitted on men's World Cup matches and applied to anonymised club-level games, so absolute values may not transfer.
-- Pitch dimensions for the Metrica data are assumed to be 106 × 68 m.
+- Pitch dimensions for the Metrica data are assumed to be 106 × 68 m. The DFL loader uses the true 105 × 68 m, and the pitch-control grid still uses the 106 × 68 convention, a sub-metre edge effect.
 - The Spearman parameters are defaults, not fitted to this data.
-- Attacking direction is inferred per game from the goalkeeper's position, because the Metrica files don't state it.
+- Attacking direction is inferred per game from the goalkeeper's position, because the tracking files don't state it.
 - Metrica sample game 3 uses a different file format and is not supported yet.
 
 ## Run it
@@ -65,8 +75,23 @@ pip install -e .
 git clone --depth 1 https://github.com/metrica-sports/sample-data.git data/raw/metrica
 
 pytest -q
-python scripts/make_figures.py      # regenerates everything in docs/
-streamlit run app/streamlit_app.py   # interactive explorer
+python scripts/make_figures.py                # regenerates everything in docs/
+python -m streamlit run app/streamlit_app.py  # interactive explorer
+```
+
+### Optional: DFL data
+
+The DFL files are large and not included in the repo. For each match, download its three XML files into `data/raw/dfl/`. For example, for match `J03WPY`:
+
+```bash
+mkdir -p data/raw/dfl && cd data/raw/dfl
+BASE=https://huggingface.co/datasets/pysport/idsse-data/resolve/main
+curl -L -C - -O $BASE/DFL_02_01_matchinformation_DFL-COM-000002_DFL-MAT-J03WPY.xml
+curl -L -C - -O $BASE/DFL_03_02_events_raw_DFL-COM-000002_DFL-MAT-J03WPY.xml
+curl -L -C - -O $BASE/DFL_04_03_positions_raw_observed_DFL-COM-000002_DFL-MAT-J03WPY.xml
+cd ../../..
+
+python scripts/check_dfl.py J03WPY   # sanity checks and a pitch-control picture
 ```
 
 ## Layout
@@ -80,8 +105,12 @@ src/pitchxt/
   pitch_control.py  Spearman model and Voronoi baseline
   value.py          control × xT and threat share
   events.py         Metrica event loader
+  dfl.py            DFL/Sportec open-data loader (via kloppy)
   validate.py       shot-prediction validation and bootstrap tests
-scripts/make_figures.py
+app/streamlit_app.py    interactive explorer
+scripts/
+  make_figures.py       regenerates the figures in docs/
+  check_dfl.py          sanity checks for the DFL loader
 tests/
 ```
 
@@ -92,3 +121,4 @@ tests/
 - Singh, K. (2019). *Introducing Expected Threat (xT)*.
 - Laurie Shaw's *Friends of Tracking* tutorials were a helpful reference for working with Metrica data.
 - Event data: [StatsBomb open data](https://github.com/statsbomb/open-data). Tracking and event data: [Metrica Sports sample data](https://github.com/metrica-sports/sample-data).
+- Tracking and event data from the Deutsche Fußball Liga (DFL), released under CC BY 4.0: Bassek, M., Rein, R., Weber, H. and Memmert, D. (2025). *An integrated dataset of spatiotemporal and event data in elite soccer*. Scientific Data, 12(1), 195. https://doi.org/10.1038/s41597-025-04505-y. Loaded with [kloppy](https://github.com/PySport/kloppy).
