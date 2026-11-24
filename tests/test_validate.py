@@ -56,3 +56,14 @@ def test_paired_bootstrap_detects_a_better_score():
     assert diff > 0.2 and lo > 0 and p > 0.99
     same, *_ = paired_bootstrap(table, "good", "good", n_boot=50)
     assert same == 0
+
+
+
+def test_source_of_and_block_ids_handle_mixed_game_ids():
+    from pitchxt.matches import source_of
+    from pitchxt.validate import _blocks
+
+    assert source_of(1) == "metrica" and source_of("2") == "metrica"
+    assert source_of("J03WPY") == "dfl"
+    table = pd.DataFrame({"game": ["1", "1", "J03WPY", "J03WPY"], "frame": [0, 2000, 0, 2000]})
+    assert len(set(_blocks(table, 1500))) == 4        # same frame in different games is a different block
