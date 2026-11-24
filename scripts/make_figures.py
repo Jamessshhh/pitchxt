@@ -9,7 +9,9 @@ import numpy as np
 
 from pitchxt import fit_xt, plot_grid
 from pitchxt.data import load_actions
+from pitchxt.dfl import downloaded_matches
 from pitchxt.events import get_shots, load_metrica_events
+from pitchxt.matches import load_shots
 from pitchxt.pitch_control import plot_pitch_control
 from pitchxt.tracking import add_velocities, load_tracking, to_single_direction
 from pitchxt.validate import run_validation
@@ -19,6 +21,7 @@ OUT = Path(__file__).resolve().parents[1] / "docs"
 OUT.mkdir(exist_ok=True)
 FRAME = 1000          # an illustrative frame from Metrica game 1
 GAME = 1
+GAMES = [1, 2] + downloaded_matches()   # Metrica games plus any DFL matches in data/raw/dfl
 
 
 def save(fig, name):
@@ -50,7 +53,7 @@ def main():
     # 4. validation across horizons (+ keep the 10 s table for the timeline)
     horizons, results, table10 = (5, 10, 15), [], None
     for h in horizons:
-        table, summary = run_validation([1, 2], grid, horizon_s=h)
+        table, summary = run_validation(GAMES, grid, horizon_s=h)
         results.append(summary)
         if h == 10:
             table10 = table
@@ -69,13 +72,14 @@ def main():
     ax.set_ylim(0.5, 1.0)
     ax.axhline(0.5, color="#999", lw=1, ls="--")
     ax.set_ylabel("AUC (0.5 = chance)")
-    ax.set_title("Predicting shots from a single frame, Metrica games 1 and 2 (48 shots)")
+    n_shots = sum(len(load_shots(g)) for g in GAMES)
+    ax.set_title(f"Predicting shots from a single frame: {len(GAMES)} matches, {n_shots} shots")
     ax.legend(loc="upper right", fontsize=8)
     ax.spines[["top", "right"]].set_visible(False)
     save(fig, "validation_auc.png")
 
     # 5. threat share through game 1, with shots marked
-    t = table10[(table10.game == GAME) & (table10.team == "home")].sort_values("frame")
+    t = table10[(table10.game == str(GAME)) & (table10.team == "home")].sort_values("frame")
     minutes = t["frame"] / 25 / 60
     smooth = t["share"].rolling(30, center=True, min_periods=1).mean()
     shots = get_shots(load_metrica_events(GAME))
