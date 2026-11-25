@@ -49,3 +49,15 @@ def test_voronoi_splits_pitch_at_the_midline():
     pa, pd_ = voronoi_control_xy(np.array([[-10.0, 0.0]]), np.array([[10.0, 0.0]]), xs, ys)
     assert (pa[:, xs < 0] == 1).all() and (pa[:, xs > 0] == 0).all()
     assert np.allclose(pa + pd_, 1)
+
+
+
+def test_lookahead_defaults_to_reaction_time_and_can_be_set_separately():
+    xs, ys = make_grid(30, 20)
+    runner = np.array([[-10.0, 0.0, 5.0, 0.0]])
+    defender = np.array([[10.0, 0.0, 0.0, 0.0]])
+    base, _ = pitch_control_xy(runner, defender, (0, 0), xs, ys)
+    same, _ = pitch_control_xy(runner, defender, (0, 0), xs, ys, {"lookahead": 0.7})   # equals reaction_time
+    longer, _ = pitch_control_xy(runner, defender, (0, 0), xs, ys, {"lookahead": 2.5})
+    assert np.allclose(base, same)
+    assert longer[:, xs > 0].mean() > base[:, xs > 0].mean()      # looking further along the run claims more space ahead

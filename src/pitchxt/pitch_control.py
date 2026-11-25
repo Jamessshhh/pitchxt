@@ -13,6 +13,7 @@ from .tracking import PITCH_LENGTH, PITCH_WIDTH, frame_players
 DEFAULT_PARAMS = dict(
     max_player_speed=5.0,      # m/s
     reaction_time=0.7,         # s before a player starts moving to the target
+    lookahead=None,            # s of extrapolation along current velocity; None = same as reaction_time
     tti_sigma=0.45,            # s, uncertainty in time-to-intercept
     lambda_att=4.3,            # control rate (1/s) once an attacker can reach the ball
     kappa_def=1.0,             # defenders' rate = lambda_att * kappa_def
@@ -35,8 +36,9 @@ def _time_to_intercept(players, tx, ty, p):
     """(n_players, n_targets) time for each player to reach each target."""
     if len(players) == 0:
         return np.empty((0, tx.size))
-    rx = players[:, 0] + players[:, 2] * p["reaction_time"]   # where they'll be after reacting
-    ry = players[:, 1] + players[:, 3] * p["reaction_time"]
+    look = p["reaction_time"] if p.get("lookahead") is None else p["lookahead"]
+    rx = players[:, 0] + players[:, 2] * look                 # where they'll be after reacting
+    ry = players[:, 1] + players[:, 3] * look
     dist = np.hypot(tx[None, :] - rx[:, None], ty[None, :] - ry[:, None])
     return p["reaction_time"] + dist / p["max_player_speed"]
 

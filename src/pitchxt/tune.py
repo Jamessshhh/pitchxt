@@ -182,12 +182,18 @@ def cross_validate(trial_shares, caches, k=3, seed=0, n_boot=1000):
 
 
 
-def grid_trials(reaction_times, ball_speeds):
-    """Trial 0 is the defaults; then every (reaction_time, ball_speed) pair with the other
-    parameters left at their defaults."""
+def grid_trials_for(axes):
+    """axes: {parameter name: list of values}. Trial 0 is the defaults; then every combination
+    (first axis varies slowest) with all other parameters at their defaults."""
+    import itertools
+
     base = {k: DEFAULT_PARAMS[k] for k in SEARCH_SPACE}
     trials = [dict(base)]
-    for rt in reaction_times:
-        for bs in ball_speeds:
-            trials.append({**base, "reaction_time": float(rt), "average_ball_speed": float(bs)})
+    for combo in itertools.product(*axes.values()):
+        trials.append({**base, **{k: float(v) for k, v in zip(axes.keys(), combo)}})
     return trials
+
+
+def grid_trials(reaction_times, ball_speeds):
+    """Reaction time x ball speed grid (see grid_trials_for)."""
+    return grid_trials_for({"reaction_time": reaction_times, "average_ball_speed": ball_speeds})
