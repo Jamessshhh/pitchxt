@@ -66,3 +66,19 @@ def test_grid_trials_cover_the_grid_and_keep_other_parameters_at_defaults():
         assert t["tti_sigma"] == DEFAULT_PARAMS["tti_sigma"] and t["lambda_att"] == DEFAULT_PARAMS["lambda_att"]
     assert {(t["reaction_time"], t["average_ball_speed"]) for t in trials[1:]} == {
         (r, b) for r in (0.5, 1.0, 2.0) for b in (15.0, 30.0)}
+    
+
+
+def test_baseline_scores_read_depth_and_forward_speed_from_each_teams_own_view():
+    from pitchxt.tune import baseline_scores
+
+    xt = np.ones((12, 16)) * 0.01
+    # home players at x = +10 moving +x at 4 m/s; away players at x = +30 moving -x at 3 m/s
+    cache = dict(frames=np.array([100]), ball=np.array([[0.0, 0.0]]),
+                 home=[np.array([[10.0, 0.0, 4.0, 0.0], [10.0, 5.0, 4.0, 0.0]])],
+                 away=[np.array([[30.0, 0.0, -3.0, 0.0]])])
+    out = baseline_scores(cache, xt)
+    assert out["forward speed (own)"][0][0] == 4.0 and out["forward speed (own)"][1][0] == 3.0   # both are moving toward goal
+    assert out["forward speed (own - opponent)"][0][0] == 1.0 and out["forward speed (own - opponent)"][1][0] == -1.0
+    assert out["attacking depth (own - opponent)"][0][0] == 10.0 - (-30.0)      # home 10 m advanced, away has retreated to -30 in its own frame
+    assert out["xT at ball"][0][0] == 0.01

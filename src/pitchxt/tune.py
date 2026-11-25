@@ -197,3 +197,50 @@ def grid_trials_for(axes):
 def grid_trials(reaction_times, ball_speeds):
     """Reaction time x ball speed grid (see grid_trials_for)."""
     return grid_trials_for({"reaction_time": reaction_times, "average_ball_speed": ball_speeds})
+
+
+
+BASELINE_NAMES = (
+    "xT at ball",
+    "attacking depth (own - opponent)",
+    "forward speed (own)",
+    "forward speed (own - opponent)",
+)
+
+
+def baseline_scores(cache, xt_grid):
+    """Simple scores per cached frame and team, with no pitch control at all.
+
+    Returns {name: (home_rows, away_rows)}. Home attacks toward +x and away toward -x.
+    'depth' is the mean x of a team's players, 'forward speed' their mean velocity toward goal."""
+    from .validate import _ball_xt
+
+    n = len(cache["frames"])
+    out = {k: (np.zeros(n), np.zeros(n)) for k in BASELINE_NAMES}
+    mean = lambda arr, j: float(arr[:, j].mean()) if len(arr) else 0.0
+    for i in range(n):
+        hx, hv = mean(cache["home"][i], 0), mean(cache["home"][i], 2)
+        ax, av = mean(cache["away"][i], 0), mean(cache["away"][i], 2)
+        depth_h, depth_a = hx, -ax
+        fs_h, fs_a = hv, -av
+        bx, by = cache["ball"][i]
+        vals = {
+            "xT at ball": (_ball_xt(xt_grid, bx, by, "home"), _ball_xt(xt_grid, bx, by, "away")),
+            "attacking depth (own - opponent)": (depth_h - depth_a, depth_a - depth_h),
+            "forward speed (own)": (fs_h, fs_a),
+            "forward speed (own - opponent)": (fs_h - fs_a, fs_a - fs_h),
+        }
+        for k, (h_val, a_val) in vals.items():
+            out[k][0][i], out[k][1][i] = h_val, a_val
+    return out
+
+
+def stack_rows(caches, home_rows, away_rows):
+    """Concatenate per-match home and away rows into (scores, labels, 60-second block ids)."""
+    s, y, b = [], [], []
+    for m, c in enumerate(caches):
+        s.append(np.concatenate([home_rows[m], away_rows[m]]))
+        y.append(np.concatenate([c["y_home"], c["y_away"]]))
+        fr = np.concatenate([c["frames"], c["frames"]])
+        b.append(m * 1_000_000 + fr // (60 * FPS))
+    return np.concatenate(s), np.concatenate(y), np.concatenate(b)
