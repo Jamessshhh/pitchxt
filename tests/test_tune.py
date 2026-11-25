@@ -52,3 +52,17 @@ def test_paired_diff_of_identical_scores_is_zero():
     d, lo, hi = paired_auc_diff(s, s, y, np.arange(500) // 50, n_boot=50)
     assert d == 0 and lo == 0 and hi == 0
     assert pooled_auc is not None
+
+
+
+def test_grid_trials_cover_the_grid_and_keep_other_parameters_at_defaults():
+    from pitchxt.pitch_control import DEFAULT_PARAMS
+    from pitchxt.tune import grid_trials
+
+    trials = grid_trials([0.5, 1.0, 2.0], [15, 30])
+    assert len(trials) == 1 + 3 * 2
+    assert trials[0]["reaction_time"] == DEFAULT_PARAMS["reaction_time"]
+    for t in trials[1:]:
+        assert t["tti_sigma"] == DEFAULT_PARAMS["tti_sigma"] and t["lambda_att"] == DEFAULT_PARAMS["lambda_att"]
+    assert {(t["reaction_time"], t["average_ball_speed"]) for t in trials[1:]} == {
+        (r, b) for r in (0.5, 1.0, 2.0) for b in (15.0, 30.0)}
