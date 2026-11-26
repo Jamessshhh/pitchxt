@@ -84,3 +84,21 @@ def test_summary_and_paired_comparisons_include_the_tuned_columns_when_present()
     assert "Tuned Spearman vs team depth" in set(paired["comparison"])
     row = paired[paired["comparison"] == "Tuned Spearman vs team depth"].iloc[0]
     assert row["auc_diff"] > 0.1 and row["ci_low"] > 0
+
+
+
+def test_detection_bins_and_paired_by_detection_run_on_a_synthetic_table():
+    from pitchxt.external import detection_bins, paired_by_detection
+
+    rng = np.random.default_rng(3)
+    n = 6000
+    label = rng.random(n) < 0.2
+    table = pd.DataFrame({"game": "1", "frame": np.arange(n) * 10, "label": label,
+                          "n_detected": rng.integers(4, 23, n)})
+    for col, signal in (("share_tuned", 1.0), ("share", 0.5), ("depth", 0.4), ("ball_xt", 0.3)):
+        table[col] = signal * label + rng.normal(0, 1, n)
+    bins = detection_bins(table)
+    assert list(bins.columns) == ["detected", "frames", "positive", "look-ahead", "published", "depth", "xT at ball"]
+    assert bins["frames"].sum() <= n and (bins["look-ahead"] > bins["published"]).all()
+    paired = paired_by_detection(table, n_boot=100)
+    assert set(paired["min_detected"]) == {12, 16} and (paired["auc_diff"] > 0).all()
