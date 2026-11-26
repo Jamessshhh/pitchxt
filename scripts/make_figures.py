@@ -14,7 +14,7 @@ from pitchxt.events import get_shots, load_metrica_events
 from pitchxt.matches import load_shots
 from pitchxt.pitch_control import plot_pitch_control
 from pitchxt.tracking import add_velocities, load_tracking, to_single_direction
-from pitchxt.validate import run_validation
+from pitchxt.validate import TUNED_PARAMS, precompute_tuned, run_validation
 from pitchxt.value import plot_value_map
 
 OUT = Path(__file__).resolve().parents[1] / "docs"
@@ -52,20 +52,21 @@ def main():
 
     # 4. validation across horizons (+ keep the 10 s table for the timeline)
     horizons, results, table10 = (5, 10, 15), [], None
+    precompute_tuned(GAMES, grid, TUNED_PARAMS)
     for h in horizons:
-        table, summary = run_validation(GAMES, grid, horizon_s=h)
+        table, summary = run_validation(GAMES, grid, horizon_s=h, tuned=TUNED_PARAMS)
         results.append(summary)
         if h == 10:
             table10 = table
     names = list(results[0]["score"])
-    colours = ["#9aa5b1", "#5b8def", "#d6455d"]
-    fig, ax = plt.subplots(figsize=(9, 5))
-    width = 0.26
+    colours = ["#9aa5b1", "#d9a441", "#5b8def", "#d6455d", "#7b2d8e"]
+    fig, ax = plt.subplots(figsize=(10, 5.5))
+    width = 0.8 / len(names)
     for i, name in enumerate(names):
         aucs = np.array([r.loc[r.score == name, "auc"].iloc[0] for r in results])
         lo = np.array([r.loc[r.score == name, "ci_low"].iloc[0] for r in results])
         hi = np.array([r.loc[r.score == name, "ci_high"].iloc[0] for r in results])
-        ax.bar(np.arange(len(horizons)) + (i - 1) * width, aucs, width, label=name, color=colours[i],
+        ax.bar(np.arange(len(horizons)) + (i - (len(names) - 1) / 2) * width, aucs, width, label=name, color=colours[i],
                yerr=[aucs - lo, hi - aucs], capsize=3, ecolor="#333")
     ax.set_xticks(range(len(horizons)))
     ax.set_xticklabels([f"shot within {h} s" for h in horizons])
@@ -74,7 +75,7 @@ def main():
     ax.set_ylabel("AUC (0.5 = chance)")
     n_shots = sum(len(load_shots(g)) for g in GAMES)
     ax.set_title(f"Predicting shots from a single frame: {len(GAMES)} matches, {n_shots} shots")
-    ax.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2, fontsize=8, frameon=False)
     ax.spines[["top", "right"]].set_visible(False)
     save(fig, "validation_auc.png")
 

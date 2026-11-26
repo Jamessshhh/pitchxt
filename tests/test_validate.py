@@ -67,3 +67,20 @@ def test_source_of_and_block_ids_handle_mixed_game_ids():
     assert source_of("J03WPY") == "dfl"
     table = pd.DataFrame({"game": ["1", "1", "J03WPY", "J03WPY"], "frame": [0, 2000, 0, 2000]})
     assert len(set(_blocks(table, 1500))) == 4        # same frame in different games is a different block
+
+
+
+def test_summary_and_paired_comparisons_include_the_tuned_columns_when_present():
+    from pitchxt.validate import _summarise, paired_summary
+
+    rng = np.random.default_rng(2)
+    n = 3000
+    label = rng.random(n) < 0.15
+    table = pd.DataFrame({"game": "1", "frame": np.arange(n) * 25, "label": label})
+    for col, signal in (("ball_xt", 0.3), ("depth", 0.4), ("share_voronoi", 0.4), ("share", 0.5), ("share_tuned", 0.9)):
+        table[col] = signal * label + rng.normal(0, 1, n)
+    assert len(_summarise(table)) == 5
+    paired = paired_summary(table)
+    assert "Tuned Spearman vs team depth" in set(paired["comparison"])
+    row = paired[paired["comparison"] == "Tuned Spearman vs team depth"].iloc[0]
+    assert row["auc_diff"] > 0.1 and row["ci_low"] > 0

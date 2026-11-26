@@ -5,23 +5,29 @@ shot in the next `horizon_s` seconds? Each candidate score is judged by AUC
 (0.5 = no signal, 1.0 = perfect). Works on any mix of Metrica games (integer ids)
 and DFL matches (string ids such as 'J03WPY').
 """
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from .matches import load_match, load_shots, source_of
-from .tracking import PITCH_LENGTH, PITCH_WIDTH
+from .tracking import PITCH_LENGTH, PITCH_WIDTH, frame_players
 from .value import SB_L, SB_W, frame_value, voronoi_share
 from .xt import xt_lookup
 
 ROOT = Path(__file__).resolve().parents[2]
 PROC_DIR = ROOT / "data" / "processed"
 FPS = 25
-SCORES = (
+# parameters chosen by match-level cross-validation (see tune.py): 5 s look-ahead, 0.3 s reaction delay
+TUNED_PARAMS = {"lookahead": 5.0, "reaction_time": 0.3}
+
+ALL_SCORES = (
     ("ball_xt", "xT at ball location"),
+    ("depth", "attacking depth (own - opponent)"),
     ("share_voronoi", "threat share, Voronoi control x xT"),
     ("share", "threat share, Spearman control x xT"),
+    ("share_tuned", "threat share, Spearman + 5 s look-ahead"),
 )
 
 
@@ -75,6 +81,60 @@ def frame_table(game_id, xt_grid, step=25, nx=33, ny=21, refresh=False):
     return out
 
 
+def _tuned_path(game_id, params, step, nx, ny):
+    tag = "_".join(f"{k}{v:g}" for k, v in sorted(params.items()))
+    return PROC_DIR / f"frames_tuned_game{game_id}_step{step}_{nx}x{ny}_{tag}.parquet"
+
+
+def tuned_table(game_id, xt_grid, params, step=25, nx=33, ny=21, refresh=False):
+    """Threat share under custom Spearman parameters, plus the team-depth baseline, for the same
+    sampled frames as frame_table. Cached to data/processed."""
+    path = _tuned_path(game_id, params, step, nx, ny)
+    if path.exists() and not refresh:
+        out = pd.read_parquet(path)
+        out["game"] = out["game"].astype(str)
+        return out
+
+    df, _ = load_match(game_id)
+    alive = df["ball_alive"].to_numpy()
+    rows = []
+    for pos in range(0, len(df), step):
+        if not alive[pos]:
+            continue
+        f = df.index[pos]
+        try:
+            r = frame_value(df, f, xt_grid, nx, ny, params)
+        except ValueError:
+            continue
+        home, away = frame_players(df, f, "home"), frame_players(df, f, "away")
+        hx = float(home[:, 0].mean()) if len(home) else 0.0
+        ax = float(away[:, 0].mean()) if len(away) else 0.0
+        d = hx + ax          # home depth (mean x) minus away depth (mean of -x)
+        for team, share, depth in (("home", r["threat_share"], d), ("away", 1 - r["threat_share"], -d)):
+            rows.append(dict(game=str(game_id), frame=f, team=team, share_tuned=share, depth=depth))
+    out = pd.DataFrame(rows)
+    out.to_parquet(path, index=False)
+    return out
+
+
+def _tuned_worker(args):
+    game_id, xt_grid, params, step, nx, ny = args
+    tuned_table(game_id, xt_grid, params, step, nx, ny)
+    return str(game_id)
+
+
+def precompute_tuned(game_ids, xt_grid, params, step=25, nx=33, ny=21, workers=4):
+    """Fill the tuned-table cache for every match in parallel (call from under `if __name__ == "__main__"`)."""
+    todo = [g for g in game_ids if not _tuned_path(g, params, step, nx, ny).exists()]
+    if not todo:
+        return
+    print(f"computing tuned scores for {len(todo)} matches with {workers} workers...", flush=True)
+    jobs = [(g, xt_grid, params, step, nx, ny) for g in todo]
+    with ProcessPoolExecutor(max_workers=workers) as ex:
+        for done in ex.map(_tuned_worker, jobs):
+            print(f"  finished {done}", flush=True)
+
+
 def label_frames(table, shots, horizon_s=10):
     """Add 'label': True if the team takes a shot in the next horizon_s seconds."""
     out = table.copy()
@@ -107,17 +167,23 @@ def bootstrap_auc(table, col, n_boot=500, block_frames=1500, seed=0):
 
 def _summarise(table):
     rows = []
-    for col, name in SCORES:
+    for col, name in ALL_SCORES:
+        if col not in table.columns:
+            continue
         lo, hi = bootstrap_auc(table, col)
         rows.append((name, auc(table[col], table["label"]), lo, hi))
     return pd.DataFrame(rows, columns=["score", "auc", "ci_low", "ci_high"])
 
 
-def run_validation(game_ids, xt_grid, horizon_s=10, step=25, nx=33, ny=21):
-    """Returns (labelled frame table, summary DataFrame of AUCs with CIs)."""
+def run_validation(game_ids, xt_grid, horizon_s=10, step=25, nx=33, ny=21, tuned=None):
+    """Returns (labelled frame table, summary DataFrame of AUCs with CIs).
+    Pass tuned=TUNED_PARAMS to add the look-ahead model and the team-depth baseline."""
     tables, shots = [], []
     for g in game_ids:
-        tables.append(frame_table(g, xt_grid, step, nx, ny))
+        t = frame_table(g, xt_grid, step, nx, ny)
+        if tuned is not None:
+            t = t.merge(tuned_table(g, xt_grid, tuned, step, nx, ny), on=["game", "frame", "team"], how="inner")
+        tables.append(t)
         s = load_shots(g)[["team", "period", "start_frame", "goal"]].copy()
         s["game"] = str(g)
         shots.append(s)
@@ -159,5 +225,12 @@ def paired_summary(table):
         ("share", "share_voronoi", "Spearman share vs Voronoi share"),
         ("share_voronoi", "ball_xt", "Voronoi share vs xT at ball"),
     ]
+    if "share_tuned" in table.columns:
+        pairs += [
+            ("share_tuned", "depth", "Tuned Spearman vs team depth"),
+            ("share_tuned", "share", "Tuned Spearman vs published Spearman"),
+            ("share", "depth", "Published Spearman vs team depth"),
+            ("share_tuned", "ball_xt", "Tuned Spearman vs xT at ball"),
+        ]
     rows = [(name, *paired_bootstrap(table, a, b)) for a, b, name in pairs]
     return pd.DataFrame(rows, columns=["comparison", "auc_diff", "ci_low", "ci_high", "p_better"])

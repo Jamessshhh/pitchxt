@@ -1,0 +1,86 @@
+matches: [1, 2, 'J03WMX', 'J03WN1', 'J03WPY', 'J03WOH', 'J03WQQ', 'J03WOY', 'J03WR9']
+shots: 219
+tuned parameters: {'lookahead': 5.0, 'reaction_time': 0.3}
+computing tuned scores for 9 matches with 4 workers...
+  finished 1
+  finished 2
+  finished J03WMX
+  finished J03WN1
+  finished J03WPY
+  finished J03WOH
+  finished J03WQQ
+  finished J03WOY
+  finished J03WR9
+
+=== shot within 5 s: 57976 sampled frames, 901 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.875   0.862    0.888
+       attacking depth (own - opponent) 0.877   0.856    0.896
+     threat share, Voronoi control x xT 0.875   0.856    0.893
+    threat share, Spearman control x xT 0.887   0.870    0.903
+threat share, Spearman + 5 s look-ahead 0.917   0.907    0.926
+
+by source:
+ source  positive_frames                                   score   auc  ci_low  ci_high
+    dfl              695                     xT at ball location 0.869   0.855    0.885
+    dfl              695        attacking depth (own - opponent) 0.867   0.845    0.888
+    dfl              695      threat share, Voronoi control x xT 0.866   0.845    0.888
+    dfl              695     threat share, Spearman control x xT 0.880   0.861    0.900
+    dfl              695 threat share, Spearman + 5 s look-ahead 0.915   0.903    0.926
+metrica              206                     xT at ball location 0.899   0.879    0.922
+metrica              206        attacking depth (own - opponent) 0.912   0.882    0.942
+metrica              206      threat share, Voronoi control x xT 0.906   0.876    0.936
+metrica              206     threat share, Spearman control x xT 0.915   0.886    0.942
+metrica              206 threat share, Spearman + 5 s look-ahead 0.929   0.911    0.944
+
+=== shot within 10 s: 57976 sampled frames, 1712 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.791   0.772    0.810
+       attacking depth (own - opponent) 0.804   0.774    0.830
+     threat share, Voronoi control x xT 0.805   0.778    0.830
+    threat share, Spearman control x xT 0.821   0.794    0.845
+threat share, Spearman + 5 s look-ahead 0.868   0.852    0.882
+
+by source:
+ source  positive_frames                                   score   auc  ci_low  ci_high
+    dfl             1325                     xT at ball location 0.783   0.761    0.804
+    dfl             1325        attacking depth (own - opponent) 0.795   0.765    0.824
+    dfl             1325      threat share, Voronoi control x xT 0.796   0.769    0.826
+    dfl             1325     threat share, Spearman control x xT 0.812   0.786    0.840
+    dfl             1325 threat share, Spearman + 5 s look-ahead 0.861   0.844    0.879
+metrica              387                     xT at ball location 0.821   0.789    0.853
+metrica              387        attacking depth (own - opponent) 0.838   0.794    0.886
+metrica              387      threat share, Voronoi control x xT 0.838   0.792    0.884
+metrica              387     threat share, Spearman control x xT 0.853   0.810    0.897
+metrica              387 threat share, Spearman + 5 s look-ahead 0.892   0.866    0.917
+
+paired differences (10 s):
+                          comparison  auc_diff  ci_low  ci_high  p_better
+        Spearman share vs xT at ball     0.030   0.014    0.044     0.999
+     Spearman share vs Voronoi share     0.015   0.012    0.019     1.000
+         Voronoi share vs xT at ball     0.014  -0.003    0.030     0.956
+        Tuned Spearman vs team depth     0.063   0.047    0.081     1.000
+Tuned Spearman vs published Spearman     0.047   0.034    0.060     1.000
+    Published Spearman vs team depth     0.016   0.009    0.025     1.000
+        Tuned Spearman vs xT at ball     0.077   0.062    0.089     1.000
+
+=== shot within 15 s: 57976 sampled frames, 2441 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.727   0.704    0.750
+       attacking depth (own - opponent) 0.747   0.712    0.780
+     threat share, Voronoi control x xT 0.750   0.718    0.782
+    threat share, Spearman control x xT 0.764   0.732    0.795
+threat share, Spearman + 5 s look-ahead 0.811   0.790    0.831
+
+by source:
+ source  positive_frames                                   score   auc  ci_low  ci_high
+    dfl             1884                     xT at ball location 0.722   0.696    0.749
+    dfl             1884        attacking depth (own - opponent) 0.737   0.703    0.770
+    dfl             1884      threat share, Voronoi control x xT 0.740   0.707    0.775
+    dfl             1884     threat share, Spearman control x xT 0.755   0.725    0.788
+    dfl             1884 threat share, Spearman + 5 s look-ahead 0.805   0.783    0.829
+metrica              557                     xT at ball location 0.746   0.709    0.789
+metrica              557        attacking depth (own - opponent) 0.781   0.722    0.844
+metrica              557      threat share, Voronoi control x xT 0.781   0.722    0.842
+metrica              557     threat share, Spearman control x xT 0.794   0.736    0.853
+metrica              557 threat share, Spearman + 5 s look-ahead 0.830   0.789    0.875
