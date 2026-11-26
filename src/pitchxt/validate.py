@@ -135,10 +135,10 @@ def precompute_tuned(game_ids, xt_grid, params, step=25, nx=33, ny=21, workers=4
             print(f"  finished {done}", flush=True)
 
 
-def label_frames(table, shots, horizon_s=10):
+def label_frames(table, shots, horizon_s=10, fps=FPS):
     """Add 'label': True if the team takes a shot in the next horizon_s seconds."""
     out = table.copy()
-    h = horizon_s * FPS
+    h = int(horizon_s * fps)
     label = np.zeros(len(out), dtype=bool)
     for (game, team), idx in out.groupby(["game", "team"]).groups.items():
         s = shots[(shots["game"] == game) & (shots["team"] == team)]["start_frame"].to_numpy()
@@ -165,12 +165,12 @@ def bootstrap_auc(table, col, n_boot=500, block_frames=1500, seed=0):
     return tuple(np.nanpercentile(vals, [2.5, 97.5]))
 
 
-def _summarise(table):
+def _summarise(table, block_frames=1500):
     rows = []
     for col, name in ALL_SCORES:
         if col not in table.columns:
             continue
-        lo, hi = bootstrap_auc(table, col)
+        lo, hi = bootstrap_auc(table, col, block_frames=block_frames)
         rows.append((name, auc(table[col], table["label"]), lo, hi))
     return pd.DataFrame(rows, columns=["score", "auc", "ci_low", "ci_high"])
 
@@ -218,7 +218,7 @@ def paired_bootstrap(table, col_a, col_b, n_boot=1000, block_frames=1500, seed=0
     return point, lo, hi, float(np.nanmean(diffs > 0))
 
 
-def paired_summary(table):
+def paired_summary(table, block_frames=1500):
     """The comparisons that matter: does each richer model beat the simpler one?"""
     pairs = [
         ("share", "ball_xt", "Spearman share vs xT at ball"),
@@ -232,5 +232,5 @@ def paired_summary(table):
             ("share", "depth", "Published Spearman vs team depth"),
             ("share_tuned", "ball_xt", "Tuned Spearman vs xT at ball"),
         ]
-    rows = [(name, *paired_bootstrap(table, a, b)) for a, b, name in pairs]
+    rows = [(name, *paired_bootstrap(table, a, b, block_frames=block_frames)) for a, b, name in pairs]
     return pd.DataFrame(rows, columns=["comparison", "auc_diff", "ci_low", "ci_high", "p_better"])

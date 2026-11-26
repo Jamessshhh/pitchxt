@@ -5,19 +5,23 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
+import pandas as pd
 
 from pitchxt import fit_xt, plot_grid
 from pitchxt.data import load_actions
 from pitchxt.dfl import downloaded_matches
 from pitchxt.events import get_shots, load_metrica_events
+from pitchxt.external import detection_bins, external_labelled_table, run_external
 from pitchxt.matches import load_shots
 from pitchxt.pitch_control import plot_pitch_control
+from pitchxt.plots import detection_chart, validation_chart
+from pitchxt.skillcorner import downloaded_skillcorner, load_skillcorner_shots
 from pitchxt.tracking import add_velocities, load_tracking, to_single_direction
 from pitchxt.validate import TUNED_PARAMS, precompute_tuned, run_validation
 from pitchxt.value import plot_value_map
 
-OUT = Path(__file__).resolve().parents[1] / "docs"
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "docs"
 OUT.mkdir(exist_ok=True)
 FRAME = 1000          # an illustrative frame from Metrica game 1
 GAME = 1
@@ -28,6 +32,16 @@ def save(fig, name):
     fig.savefig(OUT / name, dpi=130, bbox_inches="tight")
     plt.close(fig)
     print("saved", name)
+
+
+def _external_summary(horizon_s, sc_ids, grid):
+    """AUC summary on the SkillCorner matches, cached because the bootstrap is slow."""
+    path = ROOT / "data" / "processed" / f"external_summary_{horizon_s}s.csv"
+    if path.exists():
+        return pd.read_csv(path)
+    _, summary = run_external(sc_ids, grid, TUNED_PARAMS, horizon_s=horizon_s)
+    summary.to_csv(path, index=False)
+    return summary
 
 
 def main():
@@ -58,26 +72,10 @@ def main():
         results.append(summary)
         if h == 10:
             table10 = table
-    names = list(results[0]["score"])
-    colours = ["#9aa5b1", "#d9a441", "#5b8def", "#d6455d", "#7b2d8e"]
-    fig, ax = plt.subplots(figsize=(10, 5.5))
-    width = 0.8 / len(names)
-    for i, name in enumerate(names):
-        aucs = np.array([r.loc[r.score == name, "auc"].iloc[0] for r in results])
-        lo = np.array([r.loc[r.score == name, "ci_low"].iloc[0] for r in results])
-        hi = np.array([r.loc[r.score == name, "ci_high"].iloc[0] for r in results])
-        ax.bar(np.arange(len(horizons)) + (i - (len(names) - 1) / 2) * width, aucs, width, label=name, color=colours[i],
-               yerr=[aucs - lo, hi - aucs], capsize=3, ecolor="#333")
-    ax.set_xticks(range(len(horizons)))
-    ax.set_xticklabels([f"shot within {h} s" for h in horizons])
-    ax.set_ylim(0.5, 1.0)
-    ax.axhline(0.5, color="#999", lw=1, ls="--")
-    ax.set_ylabel("AUC (0.5 = chance)")
     n_shots = sum(len(load_shots(g)) for g in GAMES)
-    ax.set_title(f"Predicting shots from a single frame: {len(GAMES)} matches, {n_shots} shots")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2, fontsize=8, frameon=False)
-    ax.spines[["top", "right"]].set_visible(False)
-    save(fig, "validation_auc.png")
+    validation_chart(results, horizons, f"Predicting shots from a single frame: {len(GAMES)} matches, {n_shots} shots",
+                     OUT / "validation_auc.png")
+    print("saved validation_auc.png")
 
     # 5. threat share through game 1, with shots marked
     t = table10[(table10.game == str(GAME)) & (table10.team == "home")].sort_values("frame")
@@ -98,6 +96,19 @@ def main():
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=2, fontsize=8, frameon=False)
     ax.spines[["top", "right"]].set_visible(False)
     save(fig, "threat_share_game1.png")
+
+    # 6. external test on SkillCorner (only if its tracking files are present)
+    sc_ids = downloaded_skillcorner()
+    if sc_ids:
+        ext_results = [_external_summary(h, sc_ids, grid) for h in horizons]
+        n_ext = sum(len(load_skillcorner_shots(m)) for m in sc_ids)
+        validation_chart(ext_results, horizons,
+                         f"External test, nothing refitted: {len(sc_ids)} SkillCorner matches, {n_ext} shots",
+                         OUT / "external_auc.png")
+        print("saved external_auc.png")
+        bins = detection_bins(external_labelled_table(sc_ids, grid, TUNED_PARAMS, horizon_s=10))
+        detection_chart(bins, "External test: AUC by tracking quality", OUT / "external_by_detection.png")
+        print("saved external_by_detection.png")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,14 @@
+AUC for 'shot within 10 s', by how many players were actually seen on screen:
+detected  frames  positive  look-ahead  published  depth  xT at ball
+     0-7    7922       166       0.797      0.651  0.599       0.696
+    8-11   18234       552       0.879      0.771  0.737       0.768
+   12-15   45074      1578       0.866      0.827  0.815       0.808
+   16-19   46186      1817       0.860      0.847  0.843       0.838
+   20-22    7044       151       0.851      0.820  0.816       0.769
+
+paired differences on well-tracked frames only (95% intervals, 60-second blocks):
+ min_detected               comparison  frames  auc_diff  ci_low  ci_high
+           12  look-ahead vs published   98304     0.026   0.020    0.033
+           12 look-ahead vs team depth   98304     0.032   0.023    0.042
+           16  look-ahead vs published   53230     0.015   0.007    0.022
+           16 look-ahead vs team depth   53230     0.018   0.008    0.028
