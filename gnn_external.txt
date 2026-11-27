@@ -1,0 +1,82 @@
+train on 9 matches, test on 20 SkillCorner matches; 12 epochs, nothing tuned on the test set
+building graph data for 20 matches with 3 workers...
+  finished 1874553
+  finished 1886347
+  finished 1899585
+  finished 1925299
+  finished 1927964
+  finished 1953632
+  finished 1959846
+  finished 1986691
+  finished 1996435
+  finished 1996436
+  finished 2006229
+  finished 2006363
+  finished 2007448
+  finished 2007721
+  finished 2010085
+  finished 2011166
+  finished 2013725
+  finished 2015213
+  finished 2016236
+  finished 2017461
+    {'epoch': 1, 'train_loss': 0.1662}
+    {'epoch': 2, 'train_loss': 0.1013}
+    {'epoch': 3, 'train_loss': 0.0993}
+    {'epoch': 4, 'train_loss': 0.0975}
+    {'epoch': 5, 'train_loss': 0.0955}
+    {'epoch': 6, 'train_loss': 0.0956}
+    {'epoch': 7, 'train_loss': 0.0941}
+    {'epoch': 8, 'train_loss': 0.0929}
+    {'epoch': 9, 'train_loss': 0.0924}
+    {'epoch': 10, 'train_loss': 0.0907}
+    {'epoch': 11, 'train_loss': 0.0893}
+    {'epoch': 12, 'train_loss': 0.0887}
+
+=== external, shot within 5 s: 124460 frames (0 of 124460 lost in the merge), 2340 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.882   0.876    0.890
+       attacking depth (own - opponent) 0.877   0.865    0.888
+     threat share, Voronoi control x xT 0.869   0.857    0.881
+    threat share, Spearman control x xT 0.880   0.869    0.891
+threat share, Spearman + 5 s look-ahead 0.908   0.901    0.916
+      graph attention network (learned) 0.955   0.950    0.959
+
+=== external, shot within 10 s: 124460 frames (0 of 124460 lost in the merge), 4264 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.807   0.797    0.817
+       attacking depth (own - opponent) 0.811   0.794    0.828
+     threat share, Voronoi control x xT 0.809   0.792    0.826
+    threat share, Spearman control x xT 0.821   0.806    0.837
+threat share, Spearman + 5 s look-ahead 0.862   0.852    0.872
+      graph attention network (learned) 0.905   0.898    0.912
+
+paired differences (10 s):
+                            comparison  auc_diff  ci_low  ci_high  p_better
+          Spearman share vs xT at ball     0.014   0.004    0.025     0.996
+       Spearman share vs Voronoi share     0.013   0.011    0.015     1.000
+           Voronoi share vs xT at ball     0.002  -0.009    0.013     0.629
+          Tuned Spearman vs team depth     0.051   0.041    0.061     1.000
+  Tuned Spearman vs published Spearman     0.041   0.033    0.048     1.000
+      Published Spearman vs team depth     0.011   0.006    0.015     1.000
+          Tuned Spearman vs xT at ball     0.055   0.046    0.063     1.000
+Graph network vs Spearman + look-ahead     0.043   0.036    0.051     1.000
+   Graph network vs published Spearman     0.084   0.071    0.098     1.000
+           Graph network vs team depth     0.095   0.079    0.109     1.000
+
+AUC by how many players were actually detected:
+detected  frames  positive  look-ahead  published  depth  xT at ball  graph network
+     0-7    7922       166       0.797      0.651  0.599       0.696          0.909
+    8-11   18234       552       0.879      0.771  0.737       0.768          0.934
+   12-15   45074      1578       0.866      0.827  0.815       0.808          0.910
+   16-19   46186      1817       0.860      0.847  0.843       0.838          0.889
+   20-22    7044       151       0.851      0.820  0.816       0.769          0.866
+
+=== external, shot within 15 s: 124460 frames (0 of 124460 lost in the merge), 5966 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.747   0.733    0.760
+       attacking depth (own - opponent) 0.761   0.740    0.781
+     threat share, Voronoi control x xT 0.762   0.742    0.783
+    threat share, Spearman control x xT 0.774   0.755    0.793
+threat share, Spearman + 5 s look-ahead 0.811   0.797    0.826
+      graph attention network (learned) 0.849   0.838    0.859

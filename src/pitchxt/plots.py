@@ -5,9 +5,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-BAR_COLOURS = ["#9aa5b1", "#d9a441", "#5b8def", "#d6455d", "#7b2d8e"]
+BAR_COLOURS = ["#9aa5b1", "#d9a441", "#5b8def", "#d6455d", "#7b2d8e", "#2a9d8f"]
 LINE_STYLES = {"xT at ball": ("#9aa5b1", "o"), "depth": ("#d9a441", "s"),
-               "published": ("#d6455d", "^"), "look-ahead": ("#7b2d8e", "D")}
+               "published": ("#d6455d", "^"), "look-ahead": ("#7b2d8e", "D"), "graph network": ("#2a9d8f", "P")}
 
 
 def validation_chart(results, horizons, title, path):
@@ -37,6 +37,8 @@ def detection_chart(bins, title, path):
     """AUC of the main scores against how many players were actually seen on screen."""
     fig, ax = plt.subplots(figsize=(9, 5))
     for name, (colour, marker) in LINE_STYLES.items():
+        if name not in bins.columns:
+            continue
         ax.plot(bins["detected"], bins[name], marker=marker, color=colour, lw=2, label=name)
     for i, (frames, pos) in enumerate(zip(bins["frames"], bins["positive"])):
         ax.annotate(f"{frames / 1000:.0f}k frames\n{pos} positive", (i, 0.505), ha="center", fontsize=7, color="#666")

@@ -105,9 +105,11 @@ def detection_bins(table, bins=((0, 8), (8, 12), (12, 16), (16, 20), (20, 23))):
         sub = table[(table["n_detected"] >= lo) & (table["n_detected"] < hi)]
         if int(sub["label"].sum()) < 10:
             continue
+        cols = [("share_tuned", "look-ahead"), ("share", "published"), ("depth", "depth"), ("ball_xt", "xT at ball")]
+        if "gnn" in table.columns:
+            cols.append(("gnn", "graph network"))
         rows.append({"detected": f"{lo}-{hi - 1}", "frames": len(sub), "positive": int(sub["label"].sum()),
-                     **{name: auc(sub[col], sub["label"]) for col, name in (
-                         ("share_tuned", "look-ahead"), ("share", "published"), ("depth", "depth"), ("ball_xt", "xT at ball"))}})
+                     **{name: auc(sub[col], sub["label"]) for col, name in cols}})
     return pd.DataFrame(rows)
 
 

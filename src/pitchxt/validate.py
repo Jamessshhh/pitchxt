@@ -28,6 +28,7 @@ ALL_SCORES = (
     ("share_voronoi", "threat share, Voronoi control x xT"),
     ("share", "threat share, Spearman control x xT"),
     ("share_tuned", "threat share, Spearman + 5 s look-ahead"),
+    ("gnn", "graph attention network (learned)"),
 )
 
 
@@ -231,6 +232,12 @@ def paired_summary(table, block_frames=1500):
             ("share_tuned", "share", "Tuned Spearman vs published Spearman"),
             ("share", "depth", "Published Spearman vs team depth"),
             ("share_tuned", "ball_xt", "Tuned Spearman vs xT at ball"),
+        ]
+    if "gnn" in table.columns:
+        pairs += [
+            ("gnn", "share_tuned", "Graph network vs Spearman + look-ahead"),
+            ("gnn", "share", "Graph network vs published Spearman"),
+            ("gnn", "depth", "Graph network vs team depth"),
         ]
     rows = [(name, *paired_bootstrap(table, a, b, block_frames=block_frames)) for a, b, name in pairs]
     return pd.DataFrame(rows, columns=["comparison", "auc_diff", "ci_low", "ci_high", "p_better"])

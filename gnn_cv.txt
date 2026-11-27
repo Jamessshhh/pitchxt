@@ -1,0 +1,90 @@
+9 matches, 12 epochs per fold
+building graph data for 9 matches with 3 workers...
+  finished 1
+  finished 2
+  finished J03WMX
+  finished J03WN1
+  finished J03WPY
+  finished J03WOH
+  finished J03WQQ
+  finished J03WOY
+  finished J03WR9
+fold 0: train on ['1', '2', 'J03WMX', 'J03WN1', 'J03WOH', 'J03WR9'], test on ['J03WPY', 'J03WQQ', 'J03WOY']
+    {'epoch': 1, 'train_loss': 0.1876, 'eval_auc': np.float64(0.8651)}
+    {'epoch': 2, 'train_loss': 0.0991, 'eval_auc': np.float64(0.8802)}
+    {'epoch': 3, 'train_loss': 0.0964, 'eval_auc': np.float64(0.8866)}
+    {'epoch': 4, 'train_loss': 0.094, 'eval_auc': np.float64(0.8921)}
+    {'epoch': 5, 'train_loss': 0.093, 'eval_auc': np.float64(0.8924)}
+    {'epoch': 6, 'train_loss': 0.092, 'eval_auc': np.float64(0.8896)}
+    {'epoch': 7, 'train_loss': 0.0911, 'eval_auc': np.float64(0.8905)}
+    {'epoch': 8, 'train_loss': 0.0893, 'eval_auc': np.float64(0.8963)}
+    {'epoch': 9, 'train_loss': 0.0876, 'eval_auc': np.float64(0.8969)}
+    {'epoch': 10, 'train_loss': 0.0862, 'eval_auc': np.float64(0.8936)}
+    {'epoch': 11, 'train_loss': 0.0851, 'eval_auc': np.float64(0.8932)}
+    {'epoch': 12, 'train_loss': 0.0846, 'eval_auc': np.float64(0.8943)}
+fold 1: train on ['2', 'J03WMX', 'J03WPY', 'J03WQQ', 'J03WOY', 'J03WR9'], test on ['1', 'J03WN1', 'J03WOH']
+    {'epoch': 1, 'train_loss': 0.1757, 'eval_auc': np.float64(0.8558)}
+    {'epoch': 2, 'train_loss': 0.1012, 'eval_auc': np.float64(0.8742)}
+    {'epoch': 3, 'train_loss': 0.0989, 'eval_auc': np.float64(0.8732)}
+    {'epoch': 4, 'train_loss': 0.0979, 'eval_auc': np.float64(0.8918)}
+    {'epoch': 5, 'train_loss': 0.094, 'eval_auc': np.float64(0.8892)}
+    {'epoch': 6, 'train_loss': 0.0925, 'eval_auc': np.float64(0.8891)}
+    {'epoch': 7, 'train_loss': 0.0915, 'eval_auc': np.float64(0.8886)}
+    {'epoch': 8, 'train_loss': 0.0905, 'eval_auc': np.float64(0.8893)}
+    {'epoch': 9, 'train_loss': 0.089, 'eval_auc': np.float64(0.8874)}
+    {'epoch': 10, 'train_loss': 0.0873, 'eval_auc': np.float64(0.8907)}
+    {'epoch': 11, 'train_loss': 0.0862, 'eval_auc': np.float64(0.8893)}
+    {'epoch': 12, 'train_loss': 0.0851, 'eval_auc': np.float64(0.8898)}
+fold 2: train on ['1', 'J03WN1', 'J03WPY', 'J03WOH', 'J03WQQ', 'J03WOY'], test on ['2', 'J03WMX', 'J03WR9']
+    {'epoch': 1, 'train_loss': 0.1734, 'eval_auc': np.float64(0.8953)}
+    {'epoch': 2, 'train_loss': 0.1098, 'eval_auc': np.float64(0.9064)}
+    {'epoch': 3, 'train_loss': 0.1084, 'eval_auc': np.float64(0.9137)}
+    {'epoch': 4, 'train_loss': 0.108, 'eval_auc': np.float64(0.917)}
+    {'epoch': 5, 'train_loss': 0.1057, 'eval_auc': np.float64(0.9194)}
+    {'epoch': 6, 'train_loss': 0.1027, 'eval_auc': np.float64(0.9065)}
+    {'epoch': 7, 'train_loss': 0.1021, 'eval_auc': np.float64(0.9203)}
+    {'epoch': 8, 'train_loss': 0.1006, 'eval_auc': np.float64(0.9228)}
+    {'epoch': 9, 'train_loss': 0.0979, 'eval_auc': np.float64(0.9228)}
+    {'epoch': 10, 'train_loss': 0.0966, 'eval_auc': np.float64(0.9179)}
+    {'epoch': 11, 'train_loss': 0.0957, 'eval_auc': np.float64(0.9201)}
+    {'epoch': 12, 'train_loss': 0.0947, 'eval_auc': np.float64(0.92)}
+
+=== shot within 5 s: 57976 frames (0 of 57976 lost in the merge), 901 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.875   0.862    0.888
+       attacking depth (own - opponent) 0.877   0.856    0.896
+     threat share, Voronoi control x xT 0.875   0.856    0.893
+    threat share, Spearman control x xT 0.887   0.870    0.903
+threat share, Spearman + 5 s look-ahead 0.917   0.907    0.926
+      graph attention network (learned) 0.949   0.941    0.956
+
+=== shot within 10 s: 57976 frames (0 of 57976 lost in the merge), 1712 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.791   0.772    0.810
+       attacking depth (own - opponent) 0.804   0.774    0.830
+     threat share, Voronoi control x xT 0.805   0.778    0.830
+    threat share, Spearman control x xT 0.821   0.794    0.845
+threat share, Spearman + 5 s look-ahead 0.868   0.852    0.882
+      graph attention network (learned) 0.900   0.887    0.912
+
+paired differences (10 s):
+                            comparison  auc_diff  ci_low  ci_high  p_better
+          Spearman share vs xT at ball     0.030   0.014    0.044     0.999
+       Spearman share vs Voronoi share     0.015   0.012    0.019     1.000
+           Voronoi share vs xT at ball     0.014  -0.003    0.030     0.956
+          Tuned Spearman vs team depth     0.063   0.047    0.081     1.000
+  Tuned Spearman vs published Spearman     0.047   0.034    0.060     1.000
+      Published Spearman vs team depth     0.016   0.009    0.025     1.000
+          Tuned Spearman vs xT at ball     0.077   0.062    0.089     1.000
+Graph network vs Spearman + look-ahead     0.032   0.023    0.042     1.000
+   Graph network vs published Spearman     0.079   0.061    0.099     1.000
+           Graph network vs team depth     0.095   0.074    0.119     1.000
+
+=== shot within 15 s: 57976 frames (0 of 57976 lost in the merge), 2441 positive ===
+                                  score   auc  ci_low  ci_high
+                    xT at ball location 0.727   0.704    0.750
+       attacking depth (own - opponent) 0.747   0.712    0.780
+     threat share, Voronoi control x xT 0.750   0.718    0.782
+    threat share, Spearman control x xT 0.764   0.732    0.795
+threat share, Spearman + 5 s look-ahead 0.811   0.790    0.831
+      graph attention network (learned) 0.837   0.820    0.855
