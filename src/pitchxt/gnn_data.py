@@ -100,16 +100,17 @@ def build_graph_data(game_id, step_s=1.0, refresh=False):
     return data
 
 
-def build_graph_data_sc(match_id, step_s=1.0, data_dir=None, refresh=False):
-    """SkillCorner match -> arrays (cached). 10 fps; also carries n_detected."""
+def build_graph_data_sc(match_id, step_s=1.0, data_dir=None, detected_only=False, refresh=False):
+    """SkillCorner match -> arrays (cached). 10 fps; also carries n_detected. With detected_only=True only
+    players actually seen on screen are included."""
     from .skillcorner import FPS, SC_DIR, load_skillcorner_match
     from .tracking import add_velocities, to_single_direction
 
-    path = _cache_path(f"sc{match_id}", step_s)
+    path = _cache_path(f"sc{match_id}{'det' if detected_only else ''}", step_s)
     if path.exists() and not refresh:
         return _load_npz(path)
     PROC_DIR.mkdir(parents=True, exist_ok=True)
-    raw, shots = load_skillcorner_match(match_id, data_dir or SC_DIR)
+    raw, shots = load_skillcorner_match(match_id, data_dir or SC_DIR, detected_only=detected_only)
     data = build_from_tracking(to_single_direction(add_velocities(raw)), shots, fps=FPS, step_s=step_s)
     np.savez_compressed(path, **data)
     return data
@@ -117,14 +118,19 @@ def build_graph_data_sc(match_id, step_s=1.0, data_dir=None, refresh=False):
 
 def _worker(args):
     kind, game_id, step_s = args
-    (build_graph_data_sc if kind == "sc" else build_graph_data)(game_id, step_s)
+    if kind == "main":
+        build_graph_data(game_id, step_s)
+    else:
+        build_graph_data_sc(game_id, step_s, detected_only=(kind == "scdet"))
     return str(game_id)
 
 
-def precompute_graph_data(game_ids, step_s=1.0, sc_ids=(), workers=3):
+def precompute_graph_data(game_ids, step_s=1.0, sc_ids=(), workers=3, detected_only=False):
     """Fill the caches in parallel (call from under `if __name__ == "__main__"`)."""
+    tag = "det" if detected_only else ""
     jobs = [("main", g, step_s) for g in game_ids if not _cache_path(g, step_s).exists()]
-    jobs += [("sc", m, step_s) for m in sc_ids if not _cache_path(f"sc{m}", step_s).exists()]
+    jobs += [("scdet" if detected_only else "sc", m, step_s) for m in sc_ids
+             if not _cache_path(f"sc{m}{tag}", step_s).exists()]
     if not jobs:
         return
     print(f"building graph data for {len(jobs)} matches with {workers} workers...", flush=True)

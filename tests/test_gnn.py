@@ -80,3 +80,16 @@ def test_model_learns_a_simple_pattern_and_cross_validation_runs():
     preds = cross_validate_gnn([_data(150, seed=s) for s in (3, 4, 5)], ["a", "b", "c"], k=3, epochs=2, batch_size=64)
     assert set(preds["game"]) == {"a", "b", "c"} and preds["gnn"].between(0, 1).all()
     assert len(preds) == 2 * 3 * 150
+
+
+def test_player_dropout_training_still_learns_and_handles_missing_players():
+    train = make_rows(_data(600, seed=7))
+    test = make_rows(_data(300, seed=8))
+    model, hist = train_model(train[0], train[1], train[2], epochs=6, batch_size=128, verbose=False,
+                              player_dropout=0.3, eval_data=(test[0], test[1], test[2]))
+    assert np.isfinite(hist[-1]["train_loss"]) and hist[-1]["eval_auc"] > 0.8
+    sparse = test[1].copy()
+    sparse[:, [1, 3, 5, 14, 16]] = False                               # five players unseen, as in broadcast data
+    nodes = test[0].copy()
+    nodes[~sparse] = 0.0
+    assert predict(model, nodes, sparse).shape == (600,)

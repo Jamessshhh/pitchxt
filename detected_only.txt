@@ -1,0 +1,124 @@
+20 SkillCorner matches, only players actually detected on screen; 12 epochs
+building graph data for 20 matches with 3 workers...
+  finished 1874553
+  finished 1886347
+  finished 1899585
+  finished 1925299
+  finished 1927964
+  finished 1953632
+  finished 1959846
+  finished 1986691
+  finished 1996435
+  finished 1996436
+  finished 2006229
+  finished 2006363
+  finished 2007448
+  finished 2007721
+  finished 2010085
+  finished 2011166
+  finished 2013725
+  finished 2015213
+  finished 2016236
+  finished 2017461
+scoring 20 matches with 4 workers (each parses ~90 MB of tracking)...
+  finished 1874553
+  finished 1886347
+  finished 1899585
+  finished 1925299
+  finished 1927964
+  finished 1953632
+  finished 1959846
+  finished 1986691
+  finished 1996435
+  finished 1996436
+  finished 2006229
+  finished 2006363
+  finished 2007448
+  finished 2007721
+  finished 2010085
+  finished 2011166
+  finished 2013725
+  finished 2015213
+  finished 2016236
+  finished 2017461
+training the player-dropout network...
+    {'epoch': 1, 'train_loss': 0.1671}
+    {'epoch': 2, 'train_loss': 0.1023}
+    {'epoch': 3, 'train_loss': 0.1001}
+    {'epoch': 4, 'train_loss': 0.099}
+    {'epoch': 5, 'train_loss': 0.0966}
+    {'epoch': 6, 'train_loss': 0.096}
+    {'epoch': 7, 'train_loss': 0.0953}
+    {'epoch': 8, 'train_loss': 0.0946}
+    {'epoch': 9, 'train_loss': 0.0934}
+    {'epoch': 10, 'train_loss': 0.0926}
+    {'epoch': 11, 'train_loss': 0.0911}
+    {'epoch': 12, 'train_loss': 0.0907}
+/Users/riteshmahara/pitchxt/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1396: RuntimeWarning: All-NaN slice encountered
+  return _nanquantile_unchecked(
+/Users/riteshmahara/pitchxt/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1396: RuntimeWarning: All-NaN slice encountered
+  return _nanquantile_unchecked(
+/Users/riteshmahara/pitchxt/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1396: RuntimeWarning: All-NaN slice encountered
+  return _nanquantile_unchecked(
+/Users/riteshmahara/pitchxt/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1396: RuntimeWarning: All-NaN slice encountered
+  return _nanquantile_unchecked(
+/Users/riteshmahara/pitchxt/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1396: RuntimeWarning: All-NaN slice encountered
+  return _nanquantile_unchecked(
+
+=== detected players only, shot within 5 s: 124460 frames (0 of 124460 lost in the merge), 2340 positive ===
+                                     score   auc  ci_low  ci_high
+                       xT at ball location 0.882   0.876    0.890
+          attacking depth (own - opponent) 0.905   0.898    0.912
+        threat share, Voronoi control x xT 0.591   0.572    0.612
+       threat share, Spearman control x xT   NaN     NaN      NaN
+   threat share, Spearman + 5 s look-ahead   NaN     NaN      NaN
+         graph attention network (learned) 0.946   0.941    0.951
+         graph attention network (learned) 0.946   0.941    0.951
+graph network, trained with player dropout 0.944   0.939    0.948
+
+=== detected players only, shot within 10 s: 124460 frames (0 of 124460 lost in the merge), 4264 positive ===
+                                     score   auc  ci_low  ci_high
+                       xT at ball location 0.807   0.797    0.817
+          attacking depth (own - opponent) 0.834   0.821    0.846
+        threat share, Voronoi control x xT 0.573   0.556    0.593
+       threat share, Spearman control x xT   NaN     NaN      NaN
+   threat share, Spearman + 5 s look-ahead   NaN     NaN      NaN
+         graph attention network (learned) 0.886   0.878    0.894
+         graph attention network (learned) 0.886   0.878    0.894
+graph network, trained with player dropout 0.885   0.878    0.893
+
+paired differences (10 s):
+                            comparison  auc_diff  ci_low  ci_high  p_better
+          Spearman share vs xT at ball       NaN     NaN      NaN       0.0
+       Spearman share vs Voronoi share       NaN     NaN      NaN       0.0
+           Voronoi share vs xT at ball    -0.234  -0.251   -0.217       0.0
+          Tuned Spearman vs team depth       NaN     NaN      NaN       0.0
+  Tuned Spearman vs published Spearman       NaN     NaN      NaN       0.0
+      Published Spearman vs team depth       NaN     NaN      NaN       0.0
+          Tuned Spearman vs xT at ball       NaN     NaN      NaN       0.0
+Graph network vs Spearman + look-ahead       NaN     NaN      NaN       0.0
+   Graph network vs published Spearman       NaN     NaN      NaN       0.0
+           Graph network vs team depth     0.052   0.042    0.062       1.0
+                                      comparison  auc_diff  ci_low  ci_high
+Graph network (dropout) vs Spearman + look-ahead       NaN     NaN      NaN
+           Graph network (dropout) vs team depth     0.051   0.041    0.062
+        Graph network (dropout) vs graph network    -0.001  -0.003    0.000
+
+AUC by how many players were actually detected:
+detected  frames  positive  look-ahead  published  depth  xT at ball  graph network  graph network (dropout)
+     0-7    7922       166         NaN        NaN  0.696       0.696          0.831                    0.794
+    8-11   18234       552       0.599      0.493  0.813       0.768          0.913                    0.918
+   12-15   45074      1578       0.634      0.581  0.833       0.808          0.901                    0.903
+   16-19   46186      1817       0.641      0.646  0.847       0.838          0.888                    0.890
+   20-22    7044       151       0.717      0.753  0.816       0.769          0.861                    0.866
+
+=== detected players only, shot within 15 s: 124460 frames (0 of 124460 lost in the merge), 5966 positive ===
+                                     score   auc  ci_low  ci_high
+                       xT at ball location 0.747   0.733    0.760
+          attacking depth (own - opponent) 0.776   0.759    0.793
+        threat share, Voronoi control x xT 0.564   0.546    0.581
+       threat share, Spearman control x xT   NaN     NaN      NaN
+   threat share, Spearman + 5 s look-ahead   NaN     NaN      NaN
+         graph attention network (learned) 0.825   0.814    0.836
+         graph attention network (learned) 0.825   0.814    0.836
+graph network, trained with player dropout 0.824   0.813    0.835

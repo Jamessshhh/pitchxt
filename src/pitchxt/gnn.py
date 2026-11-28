@@ -131,9 +131,9 @@ def predict(model, nodes, mask, device="cpu", batch_size=2048, mirror=True):
 
 
 def train_model(nodes, mask, y, epochs=12, batch_size=256, lr=2e-3, weight_decay=1e-2, seed=0,
-                device="cpu", eval_data=None, verbose=True, **model_kw):
+                device="cpu", eval_data=None, verbose=True, player_dropout=0.0, **model_kw):
     """Fixed-budget training. eval_data=(nodes, mask, y) is only for printing a diagnostic curve; it never
-    influences training or any choice made here."""
+    influences training or any choice made here. player_dropout hides random players during training."""
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
     model = PitchGAT(**model_kw).to(device)
@@ -151,6 +151,11 @@ def train_model(nodes, mask, y, epochs=12, batch_size=256, lr=2e-3, weight_decay
             idx = perm[i * batch_size:(i + 1) * batch_size]
             xb, mb, yb = X[idx].to(device), M[idx].to(device), Y[idx].to(device)
             xb = _flip_y(xb, torch.rand(len(idx), device=device) < 0.5)           # augmentation
+            if player_dropout > 0:                                                  # hide random players (never the ball)
+                hide = torch.rand(mb.shape, device=device) < player_dropout
+                hide[:, -1] = False
+                mb = mb & ~hide
+                xb = xb.masked_fill(~mb.unsqueeze(-1), 0.0)
             loss = F.binary_cross_entropy_with_logits(model(xb, mb), yb)
             opt.zero_grad()
             loss.backward()

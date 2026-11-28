@@ -29,6 +29,8 @@ ALL_SCORES = (
     ("share", "threat share, Spearman control x xT"),
     ("share_tuned", "threat share, Spearman + 5 s look-ahead"),
     ("gnn", "graph attention network (learned)"),
+    ("gnn", "graph attention network (learned)"),
+    ("gnn_dropout", "graph network, trained with player dropout"),
 )
 
 

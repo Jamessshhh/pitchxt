@@ -5,9 +5,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-BAR_COLOURS = ["#9aa5b1", "#d9a441", "#5b8def", "#d6455d", "#7b2d8e", "#2a9d8f"]
+BAR_COLOURS = ["#9aa5b1", "#d9a441", "#5b8def", "#d6455d", "#7b2d8e", "#2a9d8f", "#8fd3c7"]
 LINE_STYLES = {"xT at ball": ("#9aa5b1", "o"), "depth": ("#d9a441", "s"),
-               "published": ("#d6455d", "^"), "look-ahead": ("#7b2d8e", "D"), "graph network": ("#2a9d8f", "P")}
+               "published": ("#d6455d", "^"), "look-ahead": ("#7b2d8e", "D"), "graph network": ("#2a9d8f", "P"),
+               "graph network (dropout)": ("#8fd3c7", "X")}
 
 
 def validation_chart(results, horizons, title, path):

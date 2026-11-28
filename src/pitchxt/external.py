@@ -20,18 +20,20 @@ PROC_DIR = ROOT / "data" / "processed"
 BLOCK_FRAMES = 60 * FPS          # 60-second bootstrap blocks at 10 fps
 
 
-def _ext_path(match_id, params, step_s, nx, ny):
-    tag = "_".join(f"{k}{v:g}" for k, v in sorted(params.items()))
+def _ext_path(match_id, params, step_s, nx, ny, detected_only=False):
+    tag = "_".join(f"{k}{v:g}" for k, v in sorted(params.items())) + ("_detectedonly" if detected_only else "")
     return PROC_DIR / f"ext_sc{match_id}_step{step_s:g}s_{nx}x{ny}_{tag}.parquet"
 
 
-def external_table(match_id, xt_grid, params, step_s=1.0, nx=33, ny=21, data_dir=SC_DIR, refresh=False):
-    """All five scores for both teams at one frame per `step_s` seconds of ball-in-play, cached."""
-    path = _ext_path(match_id, params, step_s, nx, ny)
+def external_table(match_id, xt_grid, params, step_s=1.0, nx=33, ny=21, data_dir=SC_DIR, refresh=False,
+                   detected_only=False):
+    """All five scores for both teams at one frame per `step_s` seconds of ball-in-play, cached.
+    detected_only=True uses only the players actually seen on screen."""
+    path = _ext_path(match_id, params, step_s, nx, ny, detected_only)
     if path.exists() and not refresh:
         return pd.read_parquet(path)
 
-    raw, _ = load_skillcorner_match(match_id, data_dir)
+    raw, _ = load_skillcorner_match(match_id, data_dir, detected_only=detected_only)
     df = to_single_direction(add_velocities(raw))
     step = max(1, int(round(FPS * step_s)))
     alive, n_det = df["ball_alive"].to_numpy(), df["n_detected"].to_numpy()
@@ -61,29 +63,30 @@ def external_table(match_id, xt_grid, params, step_s=1.0, nx=33, ny=21, data_dir
 
 
 def _worker(args):
-    match_id, xt_grid, params, step_s, nx, ny, data_dir = args
-    external_table(match_id, xt_grid, params, step_s, nx, ny, data_dir)
+    match_id, xt_grid, params, step_s, nx, ny, data_dir, detected_only = args
+    external_table(match_id, xt_grid, params, step_s, nx, ny, data_dir, detected_only=detected_only)
     return str(match_id)
 
 
-def precompute_external(match_ids, xt_grid, params, step_s=1.0, nx=33, ny=21, data_dir=SC_DIR, workers=4):
+def precompute_external(match_ids, xt_grid, params, step_s=1.0, nx=33, ny=21, data_dir=SC_DIR, workers=4,
+                        detected_only=False):
     """Fill the cache for every match in parallel (call from under `if __name__ == "__main__"`)."""
-    todo = [m for m in match_ids if not _ext_path(m, params, step_s, nx, ny).exists()]
+    todo = [m for m in match_ids if not _ext_path(m, params, step_s, nx, ny, detected_only).exists()]
     if not todo:
         return
     print(f"scoring {len(todo)} matches with {workers} workers (each parses ~90 MB of tracking)...", flush=True)
-    jobs = [(m, xt_grid, params, step_s, nx, ny, data_dir) for m in todo]
+    jobs = [(m, xt_grid, params, step_s, nx, ny, data_dir, detected_only) for m in todo]
     with ProcessPoolExecutor(max_workers=workers) as ex:
         for done in ex.map(_worker, jobs):
             print(f"  finished {done}", flush=True)
 
 
 def external_labelled_table(match_ids, xt_grid, params, horizon_s=10, step_s=1.0, nx=33, ny=21,
-                            data_dir=SC_DIR, min_detected=0):
+                            data_dir=SC_DIR, min_detected=0, detected_only=False):
     """The cached score tables with the 'shot within horizon_s' label attached (no bootstrap)."""
     tables, shots = [], []
     for m in match_ids:
-        tables.append(external_table(m, xt_grid, params, step_s, nx, ny, data_dir))
+        tables.append(external_table(m, xt_grid, params, step_s, nx, ny, data_dir, detected_only=detected_only))
         s = load_skillcorner_shots(m, data_dir)[["team", "period", "start_frame", "goal"]].copy()
         s["game"] = str(m)
         shots.append(s)
@@ -91,10 +94,11 @@ def external_labelled_table(match_ids, xt_grid, params, horizon_s=10, step_s=1.0
     return table[table["n_detected"] >= min_detected].reset_index(drop=True)
 
 
-def run_external(match_ids, xt_grid, params, horizon_s=10, step_s=1.0, nx=33, ny=21, data_dir=SC_DIR, min_detected=0):
+def run_external(match_ids, xt_grid, params, horizon_s=10, step_s=1.0, nx=33, ny=21, data_dir=SC_DIR, min_detected=0,
+                 detected_only=False):
     """Returns (labelled table, AUC summary). min_detected keeps only frames where at least that many
     of the players on the pitch were actually seen on screen (the rest are extrapolated)."""
-    table = external_labelled_table(match_ids, xt_grid, params, horizon_s, step_s, nx, ny, data_dir, min_detected)
+    table = external_labelled_table(match_ids, xt_grid, params, horizon_s, step_s, nx, ny, data_dir, min_detected, detected_only)
     return table, _summarise(table, block_frames=BLOCK_FRAMES)
 
 
@@ -108,6 +112,8 @@ def detection_bins(table, bins=((0, 8), (8, 12), (12, 16), (16, 20), (20, 23))):
         cols = [("share_tuned", "look-ahead"), ("share", "published"), ("depth", "depth"), ("ball_xt", "xT at ball")]
         if "gnn" in table.columns:
             cols.append(("gnn", "graph network"))
+        if "gnn_dropout" in table.columns:
+            cols.append(("gnn_dropout", "graph network (dropout)"))
         rows.append({"detected": f"{lo}-{hi - 1}", "frames": len(sub), "positive": int(sub["label"].sum()),
                      **{name: auc(sub[col], sub["label"]) for col, name in cols}})
     return pd.DataFrame(rows)

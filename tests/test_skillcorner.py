@@ -66,3 +66,18 @@ def test_lfs_pointers_are_not_treated_as_downloaded_data(tmp_path, monkeypatch):
     assert downloaded_skillcorner(data) == []
     with pytest.raises(RuntimeError, match="LFS"):
         load_skillcorner_match(7, data)
+
+
+
+def test_detection_flags_are_kept_and_detected_only_blanks_unseen_players(tmp_path, monkeypatch):
+    import pitchxt.skillcorner as sc
+
+    data = _write_match(tmp_path)
+    monkeypatch.setattr(sc, "MIN_TRACKING_BYTES", 100)
+    tracking, _ = load_skillcorner_match(7, data)
+    assert tracking["home_1_det"].all() and tracking["away_3_det"].tolist() == [True, False, True, False, True, False]
+    assert not tracking["away_3_x"].isna().any()                      # extrapolated positions are present by default
+
+    strict, _ = load_skillcorner_match(7, data, detected_only=True)
+    assert strict["away_3_x"].isna().tolist() == [False, True, False, True, False, True]    # unseen frames are blanked
+    assert strict["home_1_x"].notna().all() and strict["n_detected"].tolist() == tracking["n_detected"].tolist()

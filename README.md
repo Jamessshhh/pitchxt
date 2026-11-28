@@ -79,6 +79,8 @@ Paired comparison at 10 s:
 
 **Tracking quality matters.** Broadcast tracking only sees part of the pitch: SkillCorner extrapolates the players who are off screen. In the sampled frames a median of 15 of 22 players were actually detected, and only 43% of frames had 16 or more.
 
+> **Under review:** SkillCorner fills in positions for players who are off screen, and I have not yet confirmed that those positions contain no information about the near future. A rerun using only the players actually seen on screen is in progress; the tracking-quality results in this section are provisional until it is done.
+
 ![AUC by tracking quality](docs/external_by_detection.png)
 
 *AUC at 10 s in bands of how many players were actually detected. The simple scores fall apart when most players are extrapolated; the look-ahead score does not.*

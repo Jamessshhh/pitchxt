@@ -82,6 +82,7 @@ def _parse_tracking(rows, mapping, length, width, phases):
             "ball_x": bx, "ball_y": by, "ball_alive": alive, "n_detected": D.sum(axis=1)}
     for j, pre in enumerate(prefixes):
         cols[f"{pre}_x"], cols[f"{pre}_y"] = X[:, j], Y[:, j]
+        cols[f"{pre}_det"] = D[:, j]                 # True where the player was actually seen on screen
     out = pd.DataFrame(cols, index=pd.Index(frames, name="Frame"))
     return out[~out.index.duplicated()]
 
@@ -99,8 +100,11 @@ def _load_shots(evt_path, home_id):
     }).reset_index(drop=True)
 
 
-def load_skillcorner_match(match_id, data_dir=SC_DIR):
-    """Returns (tracking, shots) in raw pitch orientation; run add_velocities and to_single_direction on it."""
+def load_skillcorner_match(match_id, data_dir=SC_DIR, detected_only=False):
+    """Returns (tracking, shots) in raw pitch orientation; run add_velocities and to_single_direction on it.
+
+    detected_only=True blanks the position of every player in every frame where SkillCorner did not actually
+    see them (their positions are otherwise extrapolated), so only observed players remain."""
     meta, trk, evt, phases_path = _paths(match_id, data_dir)
     if trk.stat().st_size <= MIN_TRACKING_BYTES:
         raise RuntimeError(f"{trk.name} looks like a Git LFS pointer, not data. Install git-lfs and run `git lfs pull`.")
@@ -121,6 +125,10 @@ def load_skillcorner_match(match_id, data_dir=SC_DIR):
 
     phases = pd.read_csv(phases_path, usecols=["frame_start", "frame_end"]) if phases_path.exists() else None
     tracking = _parse_tracking(rows, mapping, float(match["pitch_length"]), float(match["pitch_width"]), phases)
+    if detected_only:
+        for pre in [c[:-4] for c in tracking.columns if c.endswith("_det")]:
+            unseen = ~tracking[f"{pre}_det"].to_numpy()
+            tracking.loc[unseen, [f"{pre}_x", f"{pre}_y"]] = np.nan
     tracking.attrs.update(id_key=key, home_team_side=match.get("home_team_side"),
                           pitch=(match["pitch_length"], match["pitch_width"]))
     return tracking, _load_shots(evt, match["home_team"]["id"])
